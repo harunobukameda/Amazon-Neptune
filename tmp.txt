@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  HandsOnName:
+    Type: String
+    Default: handson
+  UserName:
+    Type: String
+    Default: user1
+Resources:
+  HandsOnVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      InstanceTenancy: default
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub "${HandsOnName}-${UserName}-vpc"
+  PrivateSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-west-2 c
+      VpcId: !Ref 'HandsOnVPC'
+      Tags:
+        - Key: Name
+          Value: !Sub "${HandsOnName}-${UserName}-private-1c"
+  PubSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: us-west-2 c
+      VpcId: !Ref 'HandsOnVPC'
+      Tags:
+        - Key: Name
+          Value: !Sub "${HandsOnName}-${UserName}-public-1c"
+  PrivateSubnet1d:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-west-2 d
+      VpcId: !Ref 'HandsOnVPC'
+      Tags:
+        - Key: Name
+          Value: !Sub "${HandsOnName}-${UserName}-private-1d"
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties: {}
+  PubRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'HandsOnVPC'
+  Gateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'HandsOnVPC'
+      InternetGatewayId: !Ref 'InternetGateway'
+  subnetroute1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'PubRouteTable'
+      SubnetId: !Ref 'PubSubnet1c'
+  route1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      RouteTableId: !Ref 'PubRouteTable'
+      GatewayId: !Ref 'InternetGateway'
+    DependsOn: Gateway
+Outputs:
+  HandsOnVPC:
+    Value: !Ref 'HandsOnVPC'
+    Export:
+      Name: !Sub "${HandsOnName}-${UserName}-vpc"
+  HandsOnVPCDefaultSG:
+    Value: !GetAtt [ "HandsOnVPC", "DefaultSecurityGroup" ] 
+    Export:
+      Name: !Sub "${HandsOnName}-${UserName}-vpc-default-sg"
+  PubSubnet1c:
+    Value: !Ref 'PubSubnet1c'
+    Export:
+      Name: !Sub "${HandsOnName}-${UserName}-public-1c"
+  PrivateSubnet1c:
+    Value: !Ref 'PrivateSubnet1c'
+    Export:
+      Name: !Sub "${HandsOnName}-${UserName}-private-1c"
+  PrivateSubnet1d:
+    Value: !Ref 'PrivateSubnet1d'
+    Export:
+      Name: !Sub "${HandsOnName}-${UserName}-private-1d"
+Description: Neptune Handson Step1
